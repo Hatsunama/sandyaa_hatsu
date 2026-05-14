@@ -308,6 +308,17 @@ export class Orchestrator {
       // Phase 1: Analyze prioritized targets only
       filesToProcess = prioritizedFiles;
       console.log(chalk.cyan(`Phase 1: High-priority targets (${filesToProcess.length} files)\n`));
+
+      // OpenAI JSON responses are more reliable with smaller first chunks on large repos.
+      if (this.config.provider?.primary === 'openai') {
+        if (files.length > 25000) {
+          this.dynamicChunker.setStartingSize(5);
+          console.log(chalk.gray('OpenAI massive-repo mode: starting with 5 files/chunk'));
+        } else if (files.length > 5000) {
+          this.dynamicChunker.setStartingSize(10);
+          console.log(chalk.gray('OpenAI large-repo mode: starting with 10 files/chunk'));
+        }
+      }
     } else {
       phase = 'systematic';
       console.log(chalk.cyan(`Phase 2: Systematic coverage (${filesToProcess.length} files remaining)\n`));

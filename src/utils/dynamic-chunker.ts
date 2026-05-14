@@ -27,6 +27,14 @@ export class DynamicChunker {
   }
 
   /**
+   * Override starting chunk size before any metrics are learned.
+   * Used for massive repositories/providers that need safer first chunks.
+   */
+  setStartingSize(size: number): void {
+    this.startingSize = Math.max(this.MIN_CHUNK_SIZE, Math.min(this.MAX_CHUNK_SIZE, size));
+  }
+
+  /**
    * Calculate optimal chunk size based on learned metrics
    */
   getChunkSize(): number {
