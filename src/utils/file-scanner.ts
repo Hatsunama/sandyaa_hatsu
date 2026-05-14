@@ -36,7 +36,7 @@ export class FileScanner {
       if (this.config.analysis.focus_areas.length > 3) {
         process.stdout.write(chalk.hex('#FF8C00')(`\r      ⚡ Scanning area ${i + 1}/${this.config.analysis.focus_areas.length}: ${area}...`));
       }
-      const pattern = path.join(targetPath, area, '**/*');
+      const pattern = path.join(targetPath, area, '**/*').replace(/\\/g, '/');
       const matches = await glob(pattern, {
         ignore: this.config.target.exclude_patterns,
         nodir: true
@@ -53,7 +53,7 @@ export class FileScanner {
 
   private async scanAll(targetPath: string): Promise<string[]> {
     process.stdout.write(chalk.hex('#FF8C00')(`    ⚡ Scanning codebase...`));
-    const pattern = path.join(targetPath, '**/*');
+    const pattern = path.join(targetPath, '**/*').replace(/\\/g, '/');
     const files = await glob(pattern, {
       ignore: this.config.target.exclude_patterns,
       nodir: true

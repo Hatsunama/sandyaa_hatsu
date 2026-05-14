@@ -29,14 +29,16 @@ export interface Config {
     clone_depth: number;
     cleanup: boolean;
   };
-  // AI Provider Configuration - Auto-switching between Claude/Gemini
+  // AI Provider Configuration - Auto-switching between Claude/Gemini/OpenAI
   provider?: {
-    primary: 'claude' | 'gemini' | 'auto';  // Primary provider
-    fallback: 'claude' | 'gemini' | 'none'; // Fallback on rate limit
-    autoSwitch: boolean;  // Enable automatic switching
+    primary: 'claude' | 'gemini' | 'openai' | 'auto';
+    fallback: 'claude' | 'gemini' | 'openai' | 'none';
+    autoSwitch: boolean;
+    intelligentSelection?: boolean;
     models?: {
       claude?: 'haiku' | 'sonnet' | 'opus';
       gemini?: 'flash' | 'pro' | 'ultra';
+      openai?: 'mini' | 'standard' | 'codex' | 'frontier';
     };
   };
   analysis: {

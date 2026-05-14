@@ -474,6 +474,9 @@ Consult security best practices specific to: ${vuln.type}
   async generateSummary(totalBugs: number, totalFiles: number, duration: string): Promise<void> {
     const summaryPath = path.join(this.findingsDir, 'SUMMARY.md');
 
+    // Ensure summary generation works even when there are zero findings.
+    await fs.mkdir(this.findingsDir, { recursive: true });
+
     // Read all bug directories to compile summary
     const entries = await fs.readdir(this.findingsDir, { withFileTypes: true });
     const bugDirs = entries.filter(e => e.isDirectory() && e.name.startsWith('bug-'));

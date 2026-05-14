@@ -27,7 +27,7 @@ const DEFAULT_CONFIG: Config = {
     cleanup: true
   },
   provider: {
-    primary: 'claude',
+    primary: 'openai',
     fallback: 'gemini',
     autoSwitch: true,
     models: {

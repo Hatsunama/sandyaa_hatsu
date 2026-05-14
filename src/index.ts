@@ -47,7 +47,7 @@ function printBanner(target: string): void {
   console.log(row('✵ Welcome to Sandyaa', orange));
   console.log(blank);
   console.log(row('  Autonomous security bug hunter', (s) => s));
-  console.log(row('  no API key  ·  powered by Claude Code', dim));
+  console.log(row('  providers: OpenAI/Codex, Claude, Gemini', dim));
   console.log(blank);
   console.log(row('  target: ' + target, dim));
   console.log(row('  v' + VERSION, dim));
@@ -64,6 +64,9 @@ program
   .argument('<target>', 'Path to target codebase or git URL')
   .option('-c, --config <path>', 'Path to config file', '.sandyaa/config.yaml')
   .option('--fresh', 'Start fresh analysis, ignore existing checkpoint')
+  .option('--provider <provider>', 'AI provider: claude, gemini, openai, auto')
+  .option('--model <model>', 'Model tier for selected provider')
+  .option('--fallback <provider>', 'Fallback provider: claude, gemini, openai, none')
   .action(async (target: string, options) => {
     try {
       printBanner(target);
@@ -79,6 +82,84 @@ program
       }
 
       const config = await loadConfig(options.config);
+
+      if (options.provider) {
+        if (!['claude', 'gemini', 'openai', 'auto'].includes(options.provider)) {
+          throw new Error("Invalid provider: " + options.provider);
+        }
+
+        config.provider = config.provider || {
+          primary: 'openai',
+          fallback: 'gemini',
+          autoSwitch: true,
+          intelligentSelection: true,
+          models: {
+            openai: 'codex',
+            claude: 'sonnet',
+            gemini: 'pro'
+          }
+        };
+
+        config.provider.primary = options.provider;
+      }
+
+      if (options.fallback) {
+        if (!['claude', 'gemini', 'openai', 'none'].includes(options.fallback)) {
+          throw new Error("Invalid fallback: " + options.fallback);
+        }
+
+        config.provider = config.provider || {
+          primary: 'openai',
+          fallback: 'gemini',
+          autoSwitch: true,
+          intelligentSelection: true,
+          models: {
+            openai: 'codex',
+            claude: 'sonnet',
+            gemini: 'pro'
+          }
+        };
+
+        config.provider.fallback = options.fallback;
+      }
+
+      if (options.model) {
+        config.provider = config.provider || {
+          primary: 'openai',
+          fallback: 'gemini',
+          autoSwitch: true,
+          intelligentSelection: true,
+          models: {
+            openai: 'codex',
+            claude: 'sonnet',
+            gemini: 'pro'
+          }
+        };
+
+        config.provider.models = config.provider.models || {};
+
+        if (config.provider.primary === 'openai') {
+          if (!['mini', 'standard', 'codex', 'frontier'].includes(options.model)) {
+            throw new Error("Invalid OpenAI model tier: " + options.model);
+          }
+
+          config.provider.models.openai = options.model;
+        } else if (config.provider.primary === 'claude') {
+          if (!['haiku', 'sonnet', 'opus'].includes(options.model)) {
+            throw new Error("Invalid Claude model tier: " + options.model);
+          }
+
+          config.provider.models.claude = options.model;
+        } else if (config.provider.primary === 'gemini') {
+          if (!['flash', 'pro', 'ultra'].includes(options.model)) {
+            throw new Error("Invalid Gemini model tier: " + options.model);
+          }
+
+          config.provider.models.gemini = options.model;
+        } else {
+          throw new Error('--model requires --provider claude, --provider gemini, or --provider openai');
+        }
+      }
       config.target.path = target;
 
       // Prevent scanning Sandyaa's own directory
