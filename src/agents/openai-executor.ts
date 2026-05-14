@@ -358,23 +358,32 @@ Return JSON:
 
   private buildAnalysisPlanningPrompt(input: any): string {
     return `
-Create a security analysis plan.
+Create a compact security analysis plan for the supplied target files.
 
 Input:
 ${JSON.stringify(input, null, 2)}
 
-Return JSON:
+Return JSON exactly shaped as:
 {
-  "plan": [
+  "analyses": [
     {
-      "step": "string",
-      "target": "string",
-      "reason": "string",
-      "expectedOutput": "string"
+      "name": "descriptive-unique-strategy-name",
+      "description": "exactly what to analyze and what to look for",
+      "justification": "why this target code needs this analysis",
+      "targetFiles": ["optional-relative-file-path"]
     }
   ],
-  "rationale": "string"
+  "reasoning": "overall strategy rationale based only on the supplied target files",
+  "focusAreas": ["specific high-priority files, components, APIs, or patterns"]
 }
+
+Rules:
+- Return only valid JSON.
+- Do not return markdown.
+- Do not use plan/rationale keys.
+- The top-level analyses field is required and must be an array.
+- Keep the response compact.
+- Use only files and facts from the input.
 `.trim();
   }
 }
