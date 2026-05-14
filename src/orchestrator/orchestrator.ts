@@ -662,7 +662,7 @@ export class Orchestrator {
         const errorMessage = error instanceof Error ? error.message : String(error);
 
         // Configuration/auth errors should fail fast rather than burning through every chunk.
-        if (errorMessage.includes('OPENAI_API_KEY environment variable is required')) {
+        if (errorMessage.includes('OPENAI_API_KEY environment variable is required') || errorMessage.includes('XAI_API_KEY environment variable is required')) {
           throw error;
         }
 
