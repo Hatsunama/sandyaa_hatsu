@@ -132,6 +132,14 @@ export class ModelExecutor {
       console.log(chalk.cyan('  Gemini Model: ' + this.config.models.gemini));
     }
 
+
+    if (this.config.models?.grok) {
+      console.log(chalk.cyan('  Grok Model: ' + this.config.models.grok));
+    }
+
+    if (this.config.models?.ollama) {
+      console.log(chalk.cyan('  Ollama Model: ' + this.config.models.ollama));
+    }
     console.log('');
   }
 

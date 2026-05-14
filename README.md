@@ -6,9 +6,11 @@
 
 Autonomous source code audit. Point it at a local directory or a git URL and Sandyaa runs end-to-end until the audit is done — no pausing, no interactive prompts. It builds context, detects vulnerabilities, writes proof-of-concept material for findings, and emits a folder of reports.
 
-This fork supports three AI provider modes:
+This fork supports five AI provider modes:
 
 - **OpenAI / Codex** through the OpenAI API
+- **Grok / xAI** through the xAI OpenAI-compatible API
+- **Ollama** through a local OpenAI-compatible endpoint
 - **Claude** through the existing Claude Code path
 - **Gemini** through the existing Gemini path
 
@@ -26,7 +28,7 @@ The fork default is **OpenAI/Codex primary with Gemini fallback**, while Claude 
 
 Most LLM-based security scanners shove files at a model and hope. Sandyaa doesn't. Two things set it apart:
 
-1. **Provider routing.** Sandyaa can run with OpenAI/Codex, Claude, or Gemini. This fork defaults to OpenAI/Codex so you do not need to pay for Claude Code just to run the audit flow.
+1. **Provider routing.** Sandyaa can run with OpenAI/Codex, Grok/xAI, Ollama, Claude, or Gemini. This fork defaults to OpenAI/Codex so you do not need to pay for Claude Code just to run the audit flow.
 2. **Recursive Language Models (RLM) for large codebases.** Instead of one giant context window, the model drives a Python REPL — it writes regex filters, chunks files, spawns sub-LLM queries, and aggregates results in code. Based on [arxiv.org/html/2512.24601v1](https://arxiv.org/html/2512.24601v1).
 
 ## Features
@@ -197,9 +199,9 @@ If the `gemini` CLI is on your `PATH` and authenticated, Sandyaa can use it. If 
 Sandyaa now supports runtime provider selection:
 
 ```bash
---provider <provider>   AI provider: claude, gemini, openai, auto
+--provider <provider>   AI provider: claude, gemini, openai, grok, ollama, auto
 --model <model>         Model tier for selected provider
---fallback <provider>   Fallback provider: claude, gemini, openai, none
+--fallback <provider>   Fallback provider: claude, gemini, openai, grok, ollama, none
 ```
 
 Examples:
@@ -396,4 +398,5 @@ Bug reports, patches, and PRs are welcome. If you find something real, add it un
 ## License
 
 MIT. See [LICENSE](./LICENSE).
+
 
