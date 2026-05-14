@@ -17,6 +17,7 @@ import chalk from 'chalk';
 import ora from 'ora';
 import * as path from 'path';
 import * as crypto from 'crypto';
+import * as fs from 'fs/promises';
 
 export interface Config {
   target: {
@@ -349,6 +350,7 @@ export class Orchestrator {
       this.dashboard.addActivity(`Chunk ${iteration}: analyzing ${chunk.length} files`);
 
       const chunkStartTime = Date.now();
+      try {
 
       // Phase 1: Deep Context Building with intelligent planning
       process.stdout.write(chalk.cyan(`  Planning: examining ${chunk.length} files... `));
@@ -652,6 +654,53 @@ export class Orchestrator {
       console.log(chalk.gray(
         `  Next chunk: ${nextSize} files (${this.dynamicChunker.getExplanation()})`
       ));
+
+      } catch (error) {
+        process.stdout.write('\r' + ' '.repeat(100) + '\r');
+        const errorMessage = error instanceof Error ? error.message : String(error);
+
+        // Configuration/auth errors should fail fast rather than burning through every chunk.
+        if (errorMessage.includes('OPENAI_API_KEY environment variable is required')) {
+          throw error;
+        }
+
+        console.log(chalk.yellow('  Chunk ' + iteration + ' failed; logging and continuing.'));
+        console.log(chalk.gray('    ' + errorMessage.slice(0, 500)));
+
+        const failedDir = path.join('findings', 'failed-chunks');
+        await fs.mkdir(failedDir, { recursive: true });
+
+        const failedPath = path.join(
+          failedDir,
+          'chunk-' + String(iteration).padStart(5, '0') + '.json'
+        );
+
+        await fs.writeFile(
+          failedPath,
+          JSON.stringify({
+            phase,
+            iteration,
+            chunkSize: chunk.length,
+            files: chunk,
+            error: errorMessage,
+            stack: error instanceof Error ? error.stack : undefined,
+            timestamp: new Date().toISOString()
+          }, null, 2),
+          'utf-8'
+        );
+
+        chunk.forEach(f => processedFiles.add(f));
+
+        await this.checkpoint.save({
+          targetPath,
+          processedFiles: Array.from(processedFiles),
+          totalBugsFound,
+          timestamp: Date.now()
+        });
+
+        console.log(chalk.gray('    Failed chunk report: ' + failedPath));
+        this.dashboard.addActivity('Chunk ' + iteration + ' failed; continued after logging');
+      }
 
       // Move to next chunk
       i += chunk.length;
