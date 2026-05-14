@@ -182,27 +182,46 @@ export class FilePrioritizer {
 
   private async findRecentChanges(limit: number): Promise<string[]> {
     try {
-      process.stdout.write(chalk.hex('#FF8C00')(`      ⚡ Analyzing git history for recent changes...`));
+      process.stdout.write(chalk.hex('#FF8C00')('      Analyzing git history for recent changes...'));
 
-      // Find git repo root (git returns paths relative to this, not to cwd)
+      // Find git repo root. Git returns changed paths relative to this root.
       const gitRoot = execSync('git rev-parse --show-toplevel', {
         cwd: this.targetPath,
         encoding: 'utf-8'
       }).trim();
 
+      // Keep this command portable: do not pipe through Unix-only sort/uniq/head.
       const output = execSync(
-        `git log --name-only --pretty=format: --since="6 months ago" | sort | uniq -c | sort -rn | head -${limit}`,
-        { cwd: this.targetPath, encoding: 'utf-8', maxBuffer: 10 * 1024 * 1024, timeout: 10000 }
+        'git log --name-only --pretty=format: --since="6 months ago"',
+        {
+          cwd: this.targetPath,
+          encoding: 'utf-8',
+          maxBuffer: 25 * 1024 * 1024,
+          timeout: 15000
+        }
       );
 
       process.stdout.write('\r' + ' '.repeat(80) + '\r');
-      const files = output.trim().split('\n')
-        .map(line => line.trim().split(/\s+/)[1])
-        .filter(f => f && f.length > 0)
-        .map(f => path.join(gitRoot, f)); // Join with git repo root, not targetPath
+
+      const counts = new Map<string, number>();
+
+      for (const rawLine of output.split(/\r?\n/)) {
+        const file = rawLine.trim();
+
+        if (!file || file.startsWith('commit ') || file.includes('\t')) {
+          continue;
+        }
+
+        counts.set(file, (counts.get(file) || 0) + 1);
+      }
+
+      const files = Array.from(counts.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, limit)
+        .map(([file]) => path.join(gitRoot, file));
 
       if (files.length > 0) {
-        console.log(chalk.gray(`      Found ${files.length} frequently changed files from git history`));
+        console.log(chalk.gray('      Found ' + files.length + ' frequently changed files from git history'));
       }
 
       return files;
