@@ -137,7 +137,7 @@ export class OpenAIExecutor {
 
   private buildContextPrompt(input: any): string {
     return `
-Build security-analysis context for the supplied files.
+Build compact security-analysis context for the supplied files.
 
 Input:
 ${JSON.stringify(input, null, 2)}
@@ -146,19 +146,28 @@ Return JSON exactly shaped as:
 {
   "files": [
     {
-      "path": "string",
-      "purpose": "string",
+      "path": "relative/path/from/input",
+      "purpose": "max 12 words",
       "securityRelevant": true,
-      "analysisStrategy": "string",
-      "entryPoints": ["string"],
-      "trustBoundaries": ["string"],
-      "sensitiveOperations": ["string"]
+      "analysisStrategy": "max 16 words",
+      "entryPoints": ["max 5 short strings"],
+      "trustBoundaries": ["max 5 short strings"],
+      "sensitiveOperations": ["max 5 short strings"]
     }
   ],
-  "entryPoints": ["string"],
-  "trustBoundaries": ["string"],
-  "summary": "string"
+  "entryPoints": ["deduped max 20 short strings"],
+  "trustBoundaries": ["deduped max 20 short strings"],
+  "summary": "max 40 words"
 }
+
+Hard limits:
+- Return only valid JSON.
+- Do not return markdown.
+- Keep every string short.
+- Include at most one file object per input file.
+- Do not include source code in the output.
+- Do not include explanations outside the JSON.
+- If unsure, use empty arrays instead of long prose.
 `.trim();
   }
 
