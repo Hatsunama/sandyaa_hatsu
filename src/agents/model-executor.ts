@@ -91,6 +91,7 @@ export class ModelExecutor {
   private rateLimitTracker: Map<Provider, number> = new Map();
   private intelligentSelector: IntelligentProviderSelector;
   private targetPath?: string;
+  private static hasPrintedProviderConfig = false;
 
   constructor(config?: ProviderConfig) {
     this.config = config || {
@@ -113,34 +114,38 @@ export class ModelExecutor {
       this.currentProvider = this.config.primary as Provider;
     }
 
-    console.log(chalk.cyan('\n  [PROVIDER CONFIG]'));
-    console.log(chalk.cyan('  Mode: ' + (this.config.intelligentSelection ? 'INTELLIGENT AUTO-SELECT' : 'STATIC')));
-    console.log(chalk.cyan('  Primary: ' + this.config.primary.toUpperCase()));
-    console.log(chalk.cyan('  Current: ' + this.currentProvider.toUpperCase()));
-    console.log(chalk.cyan('  Fallback: ' + this.config.fallback.toUpperCase()));
-    console.log(chalk.cyan('  Auto-Switch: ' + (this.config.autoSwitch ? 'ENABLED' : 'DISABLED')));
+    if (!ModelExecutor.hasPrintedProviderConfig) {
+      ModelExecutor.hasPrintedProviderConfig = true;
 
-    if (this.config.models?.openai) {
-      console.log(chalk.cyan('  OpenAI Model: ' + this.config.models.openai));
+      console.log(chalk.cyan('\n  [PROVIDER CONFIG]'));
+      console.log(chalk.cyan('  Mode: ' + (this.config.intelligentSelection ? 'INTELLIGENT AUTO-SELECT' : 'STATIC')));
+      console.log(chalk.cyan('  Primary: ' + this.config.primary.toUpperCase()));
+      console.log(chalk.cyan('  Current: ' + this.currentProvider.toUpperCase()));
+      console.log(chalk.cyan('  Fallback: ' + this.config.fallback.toUpperCase()));
+      console.log(chalk.cyan('  Auto-Switch: ' + (this.config.autoSwitch ? 'ENABLED' : 'DISABLED')));
+  
+      if (this.config.models?.openai) {
+        console.log(chalk.cyan('  OpenAI Model: ' + this.config.models.openai));
+      }
+  
+      if (this.config.models?.claude) {
+        console.log(chalk.cyan('  Claude Model: ' + this.config.models.claude));
+      }
+  
+      if (this.config.models?.gemini) {
+        console.log(chalk.cyan('  Gemini Model: ' + this.config.models.gemini));
+      }
+  
+  
+      if (this.config.models?.grok) {
+        console.log(chalk.cyan('  Grok Model: ' + this.config.models.grok));
+      }
+  
+      if (this.config.models?.ollama) {
+        console.log(chalk.cyan('  Ollama Model: ' + this.config.models.ollama));
+      }
+      console.log('');
     }
-
-    if (this.config.models?.claude) {
-      console.log(chalk.cyan('  Claude Model: ' + this.config.models.claude));
-    }
-
-    if (this.config.models?.gemini) {
-      console.log(chalk.cyan('  Gemini Model: ' + this.config.models.gemini));
-    }
-
-
-    if (this.config.models?.grok) {
-      console.log(chalk.cyan('  Grok Model: ' + this.config.models.grok));
-    }
-
-    if (this.config.models?.ollama) {
-      console.log(chalk.cyan('  Ollama Model: ' + this.config.models.ollama));
-    }
-    console.log('');
   }
 
   setTargetPath(targetPath: string): void {
