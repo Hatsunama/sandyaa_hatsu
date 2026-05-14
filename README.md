@@ -2,85 +2,43 @@
   <img src="assets/banner.png" alt="Sandyaa CLI banner" width="560">
 </p>
 
-# Sandyaa
+<h1 align="center">Sandyaa</h1>
 
-Autonomous source code audit. Point it at a local directory or a git URL and Sandyaa runs end-to-end until the audit is done — no pausing, no interactive prompts. It builds context, detects vulnerabilities, writes proof-of-concept material for findings, and emits a folder of reports.
+<p align="center">
+  <strong>Autonomous security code auditing for real bugs, large repositories, and multi-provider LLM workflows.</strong>
+</p>
+
+<p align="center">
+  <a href="#features">Features</a> ·
+  <a href="#provider-support">Providers</a> ·
+  <a href="#usage">Usage</a> ·
+  <a href="#configuration">Configuration</a> ·
+  <a href="#validation-status-for-this-fork">Validation</a>
+</p>
+
+---
+
+## Overview
+
+Sandyaa is an autonomous source-code audit tool. Point it at a local directory or a Git URL and it runs end-to-end until the audit is done: no pausing, no interactive prompts, no manual chunking.
+
+It builds security context, plans targeted analysis passes, detects vulnerabilities, generates proof-of-concept material for findings, and writes a structured report folder.
+
+This fork extends Sandyaa with broader provider support, Windows-native hardening, and large-repository resilience.
+
+## Provider Support
 
 This fork supports five AI provider modes:
 
-- **OpenAI / Codex** through the OpenAI API
-- **Grok / xAI** through the xAI OpenAI-compatible API
-- **Ollama** through a local OpenAI-compatible endpoint
-- **Claude** through the existing Claude Code path
-- **Gemini** through the existing Gemini path
+| Provider | Mode | Notes |
+|---|---|---|
+| **OpenAI / Codex** | Hosted API | Default primary provider in this fork |
+| **Grok / xAI** | Hosted API | Uses xAI’s OpenAI-compatible API |
+| **Ollama** | Local endpoint | Uses a local OpenAI-compatible endpoint |
+| **Claude** | Existing Claude path | Preserved from upstream |
+| **Gemini** | Existing Gemini path | Preserved from upstream and default fallback |
 
-The fork default is **OpenAI/Codex primary with Gemini fallback**, while Claude, Gemini, Grok/xAI, and Ollama remain available.
-
-> **Platforms:**
-> - **macOS** — original upstream target.
-> - **Linux** — expected to work.
-> - **Windows native** — this fork includes Windows path/glob normalization for local scans and has been smoke-tested from native PowerShell.
-> - **WSL2** — should work similarly to Linux.
-
-> Status: alpha. Expect rough edges and false positives.
-
-## What's different
-
-Most LLM-based security scanners shove files at a model and hope. Sandyaa doesn't. Two things set it apart:
-
-1. **Provider routing.** Sandyaa can run with OpenAI/Codex, Grok/xAI, Ollama, Claude, or Gemini. This fork defaults to OpenAI/Codex so you do not need to pay for Claude Code just to run the audit flow.
-2. **Recursive Language Models (RLM) for large codebases.** Instead of one giant context window, the model drives a Python REPL — it writes regex filters, chunks files, spawns sub-LLM queries, and aggregates results in code. Based on [arxiv.org/html/2512.24601v1](https://arxiv.org/html/2512.24601v1).
-
-## Features
-
-- OpenAI/Codex provider support via `OPENAI_API_KEY`
-- Grok/xAI provider support via `XAI_API_KEY`
-- Ollama provider support through a local OpenAI-compatible endpoint
-- Existing Claude provider support remains available
-- Existing Gemini provider support remains available
-- Shared OpenAI-compatible executor core for OpenAI, Grok/xAI, and Ollama
-- Runtime CLI provider selection with `--provider`, `--model`, and `--fallback`
-- RLM pipeline with Python REPL, sub-LLM queries, and programmatic aggregation
-- Eight recursive passes: call-chain tracing, data-flow expansion, self-verification, vulnerability chaining, POC refinement, contradiction detection, assumption validation, exploitability proof (`src/recursive/recursive-strategy.ts`)
-- Attacker-control analysis to drop findings that aren't reachable from untrusted input (`src/detector/attacker-control-analyzer.ts`)
-- Evidence chain (`evidence.json`) linking every claim to file + line
-- Dynamic chunk sizing based on code density and token budget
-- Automatic checkpointing — resume interrupted runs
-- Optional Gemini routing
-- Ink terminal dashboard for phase / progress / findings
-- POC generation and optional execution to validate findings
-- Autonomous end-to-end: start it, walk away, come back to a `findings/` folder
-- Native Windows scan path normalization for `glob` file discovery
-- Large-repo hardening with safer chunk sizing and chunk-level failure recovery
-- Fail-fast handling for missing OpenAI/Grok API keys so scans do not falsely appear successful
-
-Sandyaa is not a standalone static analyzer — it orchestrates prompts, chunking, and parsing on top of LLM providers.
-
-## Install
-
-Requirements:
-
-- Node.js 18 or newer
-- `git` for remote targets
-- For OpenAI/Codex mode: `OPENAI_API_KEY`
-- For Grok/xAI mode: `XAI_API_KEY`
-- For Ollama mode: local Ollama or another OpenAI-compatible local endpoint
-- Optional: Claude Code, if you want Claude-backed phases
-- Optional: Gemini CLI or `GEMINI_API_KEY`, if you want Gemini-backed phases
-
-```bash
-git clone https://github.com/securelayer7/sandyaa.git
-cd sandyaa
-npm install
-npm run build
-npm link      # installs the `sandyaa` command globally
-```
-
-## OpenAI / Codex Provider
-
-This fork supports OpenAI as a first-class provider.
-
-The default provider config is:
+The default provider configuration is:
 
 ```yaml
 provider:
@@ -95,7 +53,89 @@ provider:
     ollama: local
 ```
 
-### Requirements for OpenAI mode
+## Platform Support
+
+> **Status:** Alpha. Expect rough edges and false positives.
+
+| Platform | Status |
+|---|---|
+| **macOS** | Original upstream target |
+| **Linux** | Expected to work |
+| **Windows native** | Smoke-tested in this fork from PowerShell |
+| **WSL2** | Expected to work similarly to Linux |
+
+Native Windows support in this fork includes path/glob normalization for local scans.
+
+## What's Different in This Fork
+
+Most LLM-based security scanners shove files at a model and hope. Sandyaa is designed around structured, recursive analysis.
+
+This fork improves the original project in three areas:
+
+1. **Multi-provider routing**  
+   Sandyaa can run with OpenAI/Codex, Grok/xAI, Ollama, Claude, or Gemini.
+
+2. **Large-repository hardening**  
+   Large scans use safer chunk sizing, compact planning/context prompts, and chunk-level failure recovery.
+
+3. **Windows-native reliability**  
+   Windows path and glob handling were hardened so native PowerShell scans can discover files correctly.
+
+## Features
+
+- OpenAI/Codex provider support through `OPENAI_API_KEY`
+- Grok/xAI provider support through `XAI_API_KEY`
+- Ollama provider support through a local OpenAI-compatible endpoint
+- Existing Claude provider support preserved
+- Existing Gemini provider support preserved
+- Shared OpenAI-compatible executor core for OpenAI, Grok/xAI, and Ollama
+- Runtime provider selection with `--provider`, `--model`, and `--fallback`
+- Compact OpenAI-compatible planning/context prompts
+- Safer chunk sizing for large repositories
+- Chunk-level failure recovery so one bad model response does not stop the full scan
+- Fail-fast handling for missing OpenAI/Grok API keys so scans do not falsely appear successful
+- Windows-safe git prioritization and file scanning
+- Recursive Language Model pipeline with Python REPL support
+- Eight recursive passes: call-chain tracing, data-flow expansion, self-verification, vulnerability chaining, POC refinement, contradiction detection, assumption validation, and exploitability proof
+- Attacker-control analysis to drop findings that are not reachable from untrusted input
+- Evidence chain output linking claims to file paths and line numbers
+- Dynamic chunk sizing based on code density and token budget
+- Automatic checkpointing for interrupted runs
+- Ink terminal dashboard for phase, progress, and findings
+- Proof-of-concept generation and optional validation
+- Autonomous end-to-end operation
+
+Sandyaa is not a standalone static analyzer. It orchestrates prompts, chunking, parsing, provider routing, and report generation on top of LLM providers.
+
+---
+
+## Install
+
+### Requirements
+
+- Node.js 18 or newer
+- `git` for remote targets
+- For OpenAI/Codex mode: `OPENAI_API_KEY`
+- For Grok/xAI mode: `XAI_API_KEY`
+- For Ollama mode: local Ollama or another OpenAI-compatible local endpoint
+- Optional: Claude Code, if using Claude-backed phases
+- Optional: Gemini CLI or `GEMINI_API_KEY`, if using Gemini-backed phases
+
+```bash
+git clone https://github.com/securelayer7/sandyaa.git
+cd sandyaa
+npm install
+npm run build
+npm link
+```
+
+---
+
+## OpenAI / Codex Provider
+
+OpenAI is the default primary provider in this fork.
+
+### Requirements
 
 OpenAI mode requires an API key.
 
@@ -115,41 +155,19 @@ OpenAI mode does **not** require Claude Code or a Claude subscription.
 
 ### Run with OpenAI / Codex
 
-Using the installed CLI:
+Installed CLI:
 
 ```bash
 sandyaa --provider openai --model codex --fallback none /path/to/project
 ```
 
-From the built repo on Windows PowerShell:
+Built repo on Windows PowerShell:
 
 ```powershell
 node .\dist\index.js --provider openai --model codex --fallback none C:\path\to\project
 ```
 
-### OpenAI model overrides
-
-OpenAI model IDs are environment-overridable. This is useful if your OpenAI account does not have access to a specific Codex model or if the preferred model changes later.
-
-macOS/Linux:
-
-```bash
-export SANDYAA_OPENAI_CODEX_MODEL="gpt-5-codex"
-export SANDYAA_OPENAI_STANDARD_MODEL="gpt-5.5"
-export SANDYAA_OPENAI_MINI_MODEL="gpt-5.4-mini"
-export SANDYAA_OPENAI_FRONTIER_MODEL="gpt-5.5"
-export OPENAI_BASE_URL="https://api.openai.com/v1"
-```
-
-Windows PowerShell:
-
-```powershell
-$env:SANDYAA_OPENAI_CODEX_MODEL = "gpt-5.5"
-$env:OPENAI_API_KEY = "sk-..."
-node .\dist\index.js --provider openai --model codex --fallback none C:\path\to\project
-```
-
-Supported OpenAI model tiers:
+### Supported OpenAI Model Tiers
 
 ```text
 mini
@@ -158,20 +176,25 @@ codex
 frontier
 ```
 
-Default model resolution:
+### OpenAI Model Overrides
 
 ```text
 SANDYAA_OPENAI_MINI_MODEL      -> gpt-5.4-mini
 SANDYAA_OPENAI_STANDARD_MODEL  -> gpt-5.5
 SANDYAA_OPENAI_CODEX_MODEL     -> gpt-5-codex
 SANDYAA_OPENAI_FRONTIER_MODEL  -> gpt-5.5
+OPENAI_BASE_URL                -> https://api.openai.com/v1
 ```
 
 If `OPENAI_API_KEY` is missing, Sandyaa fails fast instead of continuing and falsely reporting a successful scan.
 
+---
+
 ## Grok / xAI Provider
 
 Grok/xAI is supported through the shared OpenAI-compatible executor core.
+
+### Requirements
 
 Grok mode requires an xAI API key.
 
@@ -187,19 +210,21 @@ Windows PowerShell:
 $env:XAI_API_KEY = "xai-..."
 ```
 
-Run with Grok:
+### Run with Grok
+
+Installed CLI:
 
 ```bash
 sandyaa --provider grok --model grok --fallback none /path/to/project
 ```
 
-From the built repo on Windows PowerShell:
+Built repo on Windows PowerShell:
 
 ```powershell
 node .\dist\index.js --provider grok --model grok --fallback none C:\path\to\project
 ```
 
-Supported Grok model tiers:
+### Supported Grok Model Tiers
 
 ```text
 mini
@@ -208,7 +233,7 @@ grok
 frontier
 ```
 
-Environment overrides:
+### Grok Model Overrides
 
 ```text
 SANDYAA_GROK_MINI_MODEL      -> grok-3-mini
@@ -220,29 +245,33 @@ XAI_BASE_URL                 -> https://api.x.ai/v1
 
 If `XAI_API_KEY` is missing, Sandyaa fails fast instead of continuing and falsely reporting a successful scan.
 
+---
+
 ## Ollama Provider
 
 Ollama is supported through a local OpenAI-compatible endpoint.
 
-Default local endpoint:
+### Default Local Endpoint
 
 ```text
 http://localhost:11434/v1
 ```
 
-Run with Ollama:
+### Run with Ollama
+
+Installed CLI:
 
 ```bash
 sandyaa --provider ollama --model local --fallback none /path/to/project
 ```
 
-From the built repo on Windows PowerShell:
+Built repo on Windows PowerShell:
 
 ```powershell
 node .\dist\index.js --provider ollama --model local --fallback none C:\path\to\project
 ```
 
-Supported Ollama model tiers:
+### Supported Ollama Model Tiers
 
 ```text
 local
@@ -251,7 +280,7 @@ standard
 codex
 ```
 
-Environment overrides:
+### Ollama Model Overrides
 
 ```text
 SANDYAA_OLLAMA_LOCAL_MODEL     -> qwen3-coder:480b-cloud
@@ -263,9 +292,11 @@ OLLAMA_BASE_URL                -> http://localhost:11434/v1
 
 `OLLAMA_API_KEY` is optional. The local provider uses a default placeholder key internally for OpenAI-compatible clients that require an API key value.
 
+---
+
 ## Claude Provider
 
-Claude remains supported.
+Claude remains supported through the existing Claude path.
 
 ```bash
 sandyaa --provider claude --model sonnet /path/to/project
@@ -279,7 +310,9 @@ sonnet
 opus
 ```
 
-Claude mode uses the existing Claude path. Depending on your local setup, this may require Claude Code to be installed and authenticated.
+Depending on your local setup, Claude mode may require Claude Code to be installed and authenticated.
+
+---
 
 ## Gemini Provider
 
@@ -297,11 +330,13 @@ pro
 ultra
 ```
 
-If the `gemini` CLI is on your `PATH` and authenticated, Sandyaa can use it. If you prefer the REST API, export `GEMINI_API_KEY` before running Sandyaa. This is also used to auto-resolve the latest Gemini model tiers at startup. Without it, static defaults are used.
+If the `gemini` CLI is on your `PATH` and authenticated, Sandyaa can use it. If using the REST API, export `GEMINI_API_KEY` before running Sandyaa. This is also used to auto-resolve the latest Gemini model tiers at startup. Without it, static defaults are used.
+
+---
 
 ## Provider CLI Options
 
-Sandyaa now supports runtime provider selection:
+Sandyaa supports runtime provider selection:
 
 ```bash
 --provider <provider>   AI provider: claude, gemini, openai, grok, ollama, auto
@@ -333,13 +368,15 @@ sandyaa --provider gemini --model pro /path/to/project
 
 Use `--fallback none` for deterministic provider testing.
 
+---
+
 ## Usage
 
 ```bash
 # Local directory
 sandyaa /path/to/project
 
-# Remote git URL (cloned into a temp directory)
+# Remote git URL
 sandyaa https://github.com/user/repo
 
 # Custom config
@@ -360,9 +397,13 @@ sandyaa --provider ollama --model local --fallback none /path/to/project
 
 Findings are written under `findings/`.
 
+---
+
 ## Configuration
 
-Sandyaa reads `.sandyaa/config.yaml` from the current working directory. A minimal example:
+Sandyaa reads `.sandyaa/config.yaml` from the current working directory.
+
+Minimal example:
 
 ```yaml
 target:
@@ -394,10 +435,11 @@ output:
   validate_pocs: true
 ```
 
-Provider examples:
+### Provider Examples
+
+OpenAI primary, no fallback:
 
 ```yaml
-# OpenAI primary, no fallback
 provider:
   primary: openai
   fallback: none
@@ -410,8 +452,9 @@ provider:
     ollama: local
 ```
 
+Grok primary, OpenAI fallback:
+
 ```yaml
-# Grok primary, OpenAI fallback
 provider:
   primary: grok
   fallback: openai
@@ -424,8 +467,9 @@ provider:
     ollama: local
 ```
 
+Ollama primary, no fallback:
+
 ```yaml
-# Ollama primary, no fallback
 provider:
   primary: ollama
   fallback: none
@@ -438,8 +482,9 @@ provider:
     ollama: local
 ```
 
+Claude primary, OpenAI fallback:
+
 ```yaml
-# Claude primary, OpenAI fallback
 provider:
   primary: claude
   fallback: openai
@@ -452,8 +497,9 @@ provider:
     ollama: local
 ```
 
+Gemini primary:
+
 ```yaml
-# Gemini primary
 provider:
   primary: gemini
   fallback: openai
@@ -466,6 +512,8 @@ provider:
     ollama: local
 ```
 
+---
+
 ## Windows Notes
 
 Native Windows support in this fork includes path normalization for file scanning. Windows backslash glob patterns are normalized before scanning so paths like this are discovered correctly:
@@ -474,21 +522,23 @@ Native Windows support in this fork includes path normalization for file scannin
 node .\dist\index.js --provider openai --model codex --fallback none C:\tmp\sandyaa-smoke
 ```
 
-If you are testing locally on Windows, prefer running from PowerShell after building:
+When testing locally on Windows, build first:
 
 ```powershell
 npm run build
 node .\dist\index.js --provider openai --model codex --fallback none C:\path\to\project
 ```
 
-The same local PowerShell pattern works for Grok/xAI and Ollama:
+The same pattern works for Grok/xAI and Ollama:
 
 ```powershell
 node .\dist\index.js --provider grok --model grok --fallback none C:\path\to\project
 node .\dist\index.js --provider ollama --model local --fallback none C:\path\to\project
 ```
 
-## Output layout
+---
+
+## Output Layout
 
 ```text
 findings/
@@ -506,17 +556,21 @@ findings/
 
 When no vulnerabilities are found, Sandyaa still writes a summary report instead of failing on an empty findings directory.
 
-## What it looks for
+---
 
-* Memory safety: use-after-free, buffer overflow, type confusion, double-free
-* Logic bugs: auth bypass, TOCTOU, state machine errors
-* Injection: SQL, command, XSS, SSRF, path traversal
-* Crypto misuse: weak algorithms, ECB, hardcoded keys, bad randomness
-* Concurrency: races, atomicity violations
-* Integer issues: overflow, underflow, truncation, signedness
-* Unsafe APIs: deserialization, XXE, prototype pollution
+## What It Looks For
+
+- Memory safety: use-after-free, buffer overflow, type confusion, double-free
+- Logic bugs: auth bypass, TOCTOU, state machine errors
+- Injection: SQL, command, XSS, SSRF, path traversal
+- Crypto misuse: weak algorithms, ECB, hardcoded keys, bad randomness
+- Concurrency: races, atomicity violations
+- Integer issues: overflow, underflow, truncation, signedness
+- Unsafe APIs: deserialization, XXE, prototype pollution
 
 Which of these run on a given chunk depends on the planner's view of the code.
+
+---
 
 ## Validation Status for This Fork
 
@@ -532,34 +586,55 @@ node .\dist\index.js --provider ollama --model local --fallback none --fresh C:\
 
 Validated behavior:
 
-* TypeScript build passes.
-* CLI exposes `--provider`, `--model`, and `--fallback` for OpenAI, Grok, Ollama, Claude, and Gemini.
-* OpenAI mode routes to `OPENAI (codex)`.
-* Grok mode routes to `GROK (grok)`.
-* Ollama mode routes to `OLLAMA (local)`.
-* OpenAI and Grok missing-key behavior fails fast instead of reporting a false successful scan.
-* Ollama local mode runs without requiring a cloud API key.
-* Claude is not required for OpenAI, Grok, or Ollama modes.
-* Windows scanning discovers source files after glob path normalization.
-* A zero-finding scan completes and writes `SUMMARY.md`.
+- TypeScript build passes.
+- CLI exposes `--provider`, `--model`, and `--fallback` for OpenAI, Grok, Ollama, Claude, and Gemini.
+- OpenAI mode routes to `OPENAI (codex)`.
+- Grok mode routes to `GROK (grok)`.
+- Ollama mode routes to `OLLAMA (local)`.
+- OpenAI and Grok missing-key behavior fails fast instead of reporting a false successful scan.
+- Ollama local mode runs without requiring a cloud API key.
+- Claude is not required for OpenAI, Grok, or Ollama modes.
+- Windows scanning discovers source files after glob path normalization.
+- A zero-finding scan completes and writes `SUMMARY.md`.
 
-## Share your CVEs
+---
 
-If Sandyaa helped you find a bug that was assigned a CVE, we'd like to know. Open a PR adding an entry to `CVES.md` (or a GitHub issue if you prefer) with:
+## Security and Secret Handling
 
-* CVE ID
-* Affected project and version
-* One-line description
-* Link to the public advisory or writeup
-* Which Sandyaa phase surfaced it (context building, detection, recursive pass, etc.) — optional, but useful feedback for the tool
+This fork was checked for accidental provider key exposure using working-tree and Git-history scans.
+
+Expected placeholder examples may appear in the README:
+
+```text
+OPENAI_API_KEY="sk-..."
+XAI_API_KEY="xai-..."
+```
+
+Do not commit real API keys. Use environment variables or local shell profile configuration.
+
+---
+
+## Share Your CVEs
+
+If Sandyaa helped you find a bug that was assigned a CVE, the upstream maintainers would like to know. Open a PR adding an entry to `CVES.md`, or open a GitHub issue, with:
+
+- CVE ID
+- Affected project and version
+- One-line description
+- Link to the public advisory or writeup
+- Which Sandyaa phase surfaced it, if known
 
 Only include CVEs that are already publicly disclosed. Do not submit embargoed findings.
 
+---
+
 ## Contributing
 
-Maintained by [SecureLayer7](https://securelayer7.net), who have used Sandyaa to surface a number of zero-days during their research. You don't have to wait for Mythos or the next Claude model — Sandyaa already finds real bugs on current frontier coding models. Run it against code you own or are authorized to test and see what it turns up.
+Maintained upstream by [SecureLayer7](https://securelayer7.net), who have used Sandyaa to surface zero-days during their research.
 
-Bug reports, patches, and PRs are welcome. If you find something real, add it under a `case-studies/` folder — include the target repo and commit hash, the `analysis.md`, and `evidence.json`. Redact anything sensitive before submitting.
+Bug reports, patches, and PRs are welcome. If you find something real, add it under a `case-studies/` folder with the target repo and commit hash, `analysis.md`, and `evidence.json`. Redact anything sensitive before submitting.
+
+---
 
 ## License
 
