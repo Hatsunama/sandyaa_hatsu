@@ -47,7 +47,7 @@ function printBanner(target: string): void {
   console.log(row('✵ Welcome to Sandyaa', orange));
   console.log(blank);
   console.log(row('  Autonomous security bug hunter', (s) => s));
-  console.log(row('  providers: OpenAI/Codex, Claude, Gemini', dim));
+  console.log(row('  providers: OpenAI/Codex, Grok, Ollama, Claude, Gemini', dim));
   console.log(blank);
   console.log(row('  target: ' + target, dim));
   console.log(row('  v' + VERSION, dim));
@@ -64,9 +64,9 @@ program
   .argument('<target>', 'Path to target codebase or git URL')
   .option('-c, --config <path>', 'Path to config file', '.sandyaa/config.yaml')
   .option('--fresh', 'Start fresh analysis, ignore existing checkpoint')
-  .option('--provider <provider>', 'AI provider: claude, gemini, openai, auto')
+  .option('--provider <provider>', 'AI provider: claude, gemini, openai, grok, ollama, auto')
   .option('--model <model>', 'Model tier for selected provider')
-  .option('--fallback <provider>', 'Fallback provider: claude, gemini, openai, none')
+  .option('--fallback <provider>', 'Fallback provider: claude, gemini, openai, grok, ollama, none')
   .action(async (target: string, options) => {
     try {
       printBanner(target);
@@ -84,7 +84,7 @@ program
       const config = await loadConfig(options.config);
 
       if (options.provider) {
-        if (!['claude', 'gemini', 'openai', 'auto'].includes(options.provider)) {
+        if (!['claude', 'gemini', 'openai', 'grok', 'ollama', 'auto'].includes(options.provider)) {
           throw new Error("Invalid provider: " + options.provider);
         }
 
@@ -96,7 +96,9 @@ program
           models: {
             openai: 'codex',
             claude: 'sonnet',
-            gemini: 'pro'
+            gemini: 'pro',
+            grok: 'grok',
+            ollama: 'local'
           }
         };
 
@@ -104,7 +106,7 @@ program
       }
 
       if (options.fallback) {
-        if (!['claude', 'gemini', 'openai', 'none'].includes(options.fallback)) {
+        if (!['claude', 'gemini', 'openai', 'grok', 'ollama', 'none'].includes(options.fallback)) {
           throw new Error("Invalid fallback: " + options.fallback);
         }
 
@@ -116,7 +118,9 @@ program
           models: {
             openai: 'codex',
             claude: 'sonnet',
-            gemini: 'pro'
+            gemini: 'pro',
+            grok: 'grok',
+            ollama: 'local'
           }
         };
 
@@ -132,7 +136,9 @@ program
           models: {
             openai: 'codex',
             claude: 'sonnet',
-            gemini: 'pro'
+            gemini: 'pro',
+            grok: 'grok',
+            ollama: 'local'
           }
         };
 
@@ -156,8 +162,20 @@ program
           }
 
           config.provider.models.gemini = options.model;
+        } else if (config.provider.primary === 'grok') {
+          if (!['mini', 'standard', 'grok', 'frontier'].includes(options.model)) {
+            throw new Error("Invalid Grok model tier: " + options.model);
+          }
+
+          config.provider.models.grok = options.model;
+        } else if (config.provider.primary === 'ollama') {
+          if (!['local', 'mini', 'standard', 'codex'].includes(options.model)) {
+            throw new Error("Invalid Ollama model tier: " + options.model);
+          }
+
+          config.provider.models.ollama = options.model;
         } else {
-          throw new Error('--model requires --provider claude, --provider gemini, or --provider openai');
+          throw new Error('--model requires --provider claude, --provider gemini, --provider openai, --provider grok, or --provider ollama');
         }
       }
       config.target.path = target;

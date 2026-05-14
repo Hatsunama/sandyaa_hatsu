@@ -30,16 +30,18 @@ export interface Config {
     clone_depth: number;
     cleanup: boolean;
   };
-  // AI Provider Configuration - Auto-switching between Claude/Gemini/OpenAI
+  // AI Provider Configuration - Auto-switching between Claude/Gemini/OpenAI/Grok/Ollama
   provider?: {
-    primary: 'claude' | 'gemini' | 'openai' | 'auto';
-    fallback: 'claude' | 'gemini' | 'openai' | 'none';
+    primary: 'claude' | 'gemini' | 'openai' | 'grok' | 'ollama' | 'auto';
+    fallback: 'claude' | 'gemini' | 'openai' | 'grok' | 'ollama' | 'none';
     autoSwitch: boolean;
     intelligentSelection?: boolean;
     models?: {
       claude?: 'haiku' | 'sonnet' | 'opus';
       gemini?: 'flash' | 'pro' | 'ultra';
       openai?: 'mini' | 'standard' | 'codex' | 'frontier';
+      grok?: 'mini' | 'standard' | 'grok' | 'frontier';
+      ollama?: 'local' | 'mini' | 'standard' | 'codex';
     };
   };
   analysis: {

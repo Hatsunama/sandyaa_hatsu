@@ -31,8 +31,11 @@ const DEFAULT_CONFIG: Config = {
     fallback: 'gemini',
     autoSwitch: true,
     models: {
+      openai: 'codex',
       claude: 'sonnet',
-      gemini: 'pro'
+      gemini: 'pro',
+      grok: 'grok',
+      ollama: 'local'
     }
   },
   analysis: {
