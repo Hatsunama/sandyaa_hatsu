@@ -14,7 +14,7 @@ This fork supports five AI provider modes:
 - **Claude** through the existing Claude Code path
 - **Gemini** through the existing Gemini path
 
-The fork default is **OpenAI/Codex primary with Gemini fallback**, while Claude and Gemini remain available.
+The fork default is **OpenAI/Codex primary with Gemini fallback**, while Claude, Gemini, Grok/xAI, and Ollama remain available.
 
 > **Platforms:**
 > - **macOS** — original upstream target.
@@ -34,8 +34,11 @@ Most LLM-based security scanners shove files at a model and hope. Sandyaa doesn'
 ## Features
 
 - OpenAI/Codex provider support via `OPENAI_API_KEY`
+- Grok/xAI provider support via `XAI_API_KEY`
+- Ollama provider support through a local OpenAI-compatible endpoint
 - Existing Claude provider support remains available
 - Existing Gemini provider support remains available
+- Shared OpenAI-compatible executor core for OpenAI, Grok/xAI, and Ollama
 - Runtime CLI provider selection with `--provider`, `--model`, and `--fallback`
 - RLM pipeline with Python REPL, sub-LLM queries, and programmatic aggregation
 - Eight recursive passes: call-chain tracing, data-flow expansion, self-verification, vulnerability chaining, POC refinement, contradiction detection, assumption validation, exploitability proof (`src/recursive/recursive-strategy.ts`)
@@ -48,6 +51,8 @@ Most LLM-based security scanners shove files at a model and hope. Sandyaa doesn'
 - POC generation and optional execution to validate findings
 - Autonomous end-to-end: start it, walk away, come back to a `findings/` folder
 - Native Windows scan path normalization for `glob` file discovery
+- Large-repo hardening with safer chunk sizing and chunk-level failure recovery
+- Fail-fast handling for missing OpenAI/Grok API keys so scans do not falsely appear successful
 
 Sandyaa is not a standalone static analyzer — it orchestrates prompts, chunking, and parsing on top of LLM providers.
 
@@ -58,6 +63,8 @@ Requirements:
 - Node.js 18 or newer
 - `git` for remote targets
 - For OpenAI/Codex mode: `OPENAI_API_KEY`
+- For Grok/xAI mode: `XAI_API_KEY`
+- For Ollama mode: local Ollama or another OpenAI-compatible local endpoint
 - Optional: Claude Code, if you want Claude-backed phases
 - Optional: Gemini CLI or `GEMINI_API_KEY`, if you want Gemini-backed phases
 
@@ -84,6 +91,8 @@ provider:
     openai: codex
     claude: sonnet
     gemini: pro
+    grok: grok
+    ollama: local
 ```
 
 ### Requirements for OpenAI mode
@@ -158,6 +167,102 @@ SANDYAA_OPENAI_CODEX_MODEL     -> gpt-5-codex
 SANDYAA_OPENAI_FRONTIER_MODEL  -> gpt-5.5
 ```
 
+If `OPENAI_API_KEY` is missing, Sandyaa fails fast instead of continuing and falsely reporting a successful scan.
+
+## Grok / xAI Provider
+
+Grok/xAI is supported through the shared OpenAI-compatible executor core.
+
+Grok mode requires an xAI API key.
+
+macOS/Linux:
+
+```bash
+export XAI_API_KEY="xai-..."
+```
+
+Windows PowerShell:
+
+```powershell
+$env:XAI_API_KEY = "xai-..."
+```
+
+Run with Grok:
+
+```bash
+sandyaa --provider grok --model grok --fallback none /path/to/project
+```
+
+From the built repo on Windows PowerShell:
+
+```powershell
+node .\dist\index.js --provider grok --model grok --fallback none C:\path\to\project
+```
+
+Supported Grok model tiers:
+
+```text
+mini
+standard
+grok
+frontier
+```
+
+Environment overrides:
+
+```text
+SANDYAA_GROK_MINI_MODEL      -> grok-3-mini
+SANDYAA_GROK_STANDARD_MODEL  -> grok-3
+SANDYAA_GROK_GROK_MODEL      -> grok-4
+SANDYAA_GROK_FRONTIER_MODEL  -> grok-4
+XAI_BASE_URL                 -> https://api.x.ai/v1
+```
+
+If `XAI_API_KEY` is missing, Sandyaa fails fast instead of continuing and falsely reporting a successful scan.
+
+## Ollama Provider
+
+Ollama is supported through a local OpenAI-compatible endpoint.
+
+Default local endpoint:
+
+```text
+http://localhost:11434/v1
+```
+
+Run with Ollama:
+
+```bash
+sandyaa --provider ollama --model local --fallback none /path/to/project
+```
+
+From the built repo on Windows PowerShell:
+
+```powershell
+node .\dist\index.js --provider ollama --model local --fallback none C:\path\to\project
+```
+
+Supported Ollama model tiers:
+
+```text
+local
+mini
+standard
+codex
+```
+
+Environment overrides:
+
+```text
+SANDYAA_OLLAMA_LOCAL_MODEL     -> qwen3-coder:480b-cloud
+SANDYAA_OLLAMA_MINI_MODEL      -> qwen3-coder:30b
+SANDYAA_OLLAMA_STANDARD_MODEL  -> qwen3-coder:480b-cloud
+SANDYAA_OLLAMA_CODEX_MODEL     -> qwen3-coder:480b-cloud
+OLLAMA_BASE_URL                -> http://localhost:11434/v1
+```
+
+`OLLAMA_API_KEY` is optional. The local provider uses a default placeholder key internally for OpenAI-compatible clients that require an API key value.
+
 ## Claude Provider
 
 Claude remains supported.
@@ -213,6 +318,12 @@ sandyaa --provider openai --model codex --fallback none /path/to/project
 # OpenAI/Codex with Gemini fallback
 sandyaa --provider openai --model codex --fallback gemini /path/to/project
 
+# Grok/xAI only
+sandyaa --provider grok --model grok --fallback none /path/to/project
+
+# Ollama local only
+sandyaa --provider ollama --model local --fallback none /path/to/project
+
 # Claude explicitly
 sandyaa --provider claude --model sonnet /path/to/project
 
@@ -239,6 +350,12 @@ sandyaa --fresh /path/to/project
 
 # OpenAI/Codex mode
 sandyaa --provider openai --model codex --fallback none /path/to/project
+
+# Grok/xAI mode
+sandyaa --provider grok --model grok --fallback none /path/to/project
+
+# Ollama local mode
+sandyaa --provider ollama --model local --fallback none /path/to/project
 ```
 
 Findings are written under `findings/`.
@@ -260,6 +377,8 @@ provider:
     openai: codex
     claude: sonnet
     gemini: pro
+    grok: grok
+    ollama: local
 
 analysis:
   chunk_size: 15
@@ -287,6 +406,36 @@ provider:
     openai: codex
     claude: sonnet
     gemini: pro
+    grok: grok
+    ollama: local
+```
+
+```yaml
+# Grok primary, OpenAI fallback
+provider:
+  primary: grok
+  fallback: openai
+  autoSwitch: true
+  models:
+    openai: codex
+    claude: sonnet
+    gemini: pro
+    grok: grok
+    ollama: local
+```
+
+```yaml
+# Ollama primary, no fallback
+provider:
+  primary: ollama
+  fallback: none
+  autoSwitch: true
+  models:
+    openai: codex
+    claude: sonnet
+    gemini: pro
+    grok: grok
+    ollama: local
 ```
 
 ```yaml
@@ -299,6 +448,8 @@ provider:
     openai: codex
     claude: sonnet
     gemini: pro
+    grok: grok
+    ollama: local
 ```
 
 ```yaml
@@ -311,6 +462,8 @@ provider:
     openai: codex
     claude: sonnet
     gemini: pro
+    grok: grok
+    ollama: local
 ```
 
 ## Windows Notes
@@ -326,6 +479,13 @@ If you are testing locally on Windows, prefer running from PowerShell after buil
 ```powershell
 npm run build
 node .\dist\index.js --provider openai --model codex --fallback none C:\path\to\project
+```
+
+The same local PowerShell pattern works for Grok/xAI and Ollama:
+
+```powershell
+node .\dist\index.js --provider grok --model grok --fallback none C:\path\to\project
+node .\dist\index.js --provider ollama --model local --fallback none C:\path\to\project
 ```
 
 ## Output layout
@@ -366,14 +526,20 @@ This fork has been locally validated with:
 npm run build
 node .\dist\index.js --help
 node .\dist\index.js --provider openai --model codex --fallback none --fresh C:\tmp\sandyaa-smoke
+node .\dist\index.js --provider grok --model grok --fallback none --fresh C:\tmp\sandyaa-smoke
+node .\dist\index.js --provider ollama --model local --fallback none --fresh C:\tmp\sandyaa-smoke
 ```
 
 Validated behavior:
 
 * TypeScript build passes.
-* CLI exposes `--provider`, `--model`, and `--fallback`.
+* CLI exposes `--provider`, `--model`, and `--fallback` for OpenAI, Grok, Ollama, Claude, and Gemini.
 * OpenAI mode routes to `OPENAI (codex)`.
-* Claude is not required for OpenAI mode.
+* Grok mode routes to `GROK (grok)`.
+* Ollama mode routes to `OLLAMA (local)`.
+* OpenAI and Grok missing-key behavior fails fast instead of reporting a false successful scan.
+* Ollama local mode runs without requiring a cloud API key.
+* Claude is not required for OpenAI, Grok, or Ollama modes.
 * Windows scanning discovers source files after glob path normalization.
 * A zero-finding scan completes and writes `SUMMARY.md`.
 
@@ -398,5 +564,3 @@ Bug reports, patches, and PRs are welcome. If you find something real, add it un
 ## License
 
 MIT. See [LICENSE](./LICENSE).
-
-
